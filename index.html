@@ -433,6 +433,7 @@
     // ──────────────────────────────────────────────────────────────
     // VERİ KAYNAKLARI
     // ──────────────────────────────────────────────────────────────
+    console.log("Sayfa yüklendi - init başlıyor");
     const TEACHERS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=ogretmenler';
     const STUDENT_LIST_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=TumListe';
 
@@ -476,7 +477,7 @@
           '<div class="error-message">Öğretmen listesi yüklenemedi!</div>';
       }
     }
-
+console.log("Teachers yüklendi:", teachers.length);
     function populateTeacherSelect() {
       const select = document.getElementById('teacherSelect');
       select.innerHTML = '<option value="">-- Öğretmen Seçiniz --</option>';
@@ -523,7 +524,7 @@
           '<div class="error-message">Öğrenci listesi yüklenemedi!</div>';
       }
     }
-
+console.log("Teachers yüklendi:", teachers.length);
     // ──────────────────────────────────────────────────────────────
     // GİRİŞ İŞLEMİ
     // ──────────────────────────────────────────────────────────────
