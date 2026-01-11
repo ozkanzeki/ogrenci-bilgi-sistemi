@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğrenci Bilgi Sistemi</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    /* Mevcut tüm stil kodunuz aynı kalıyor - buraya dokunmuyorum */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+   
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+      height: 100%;
+      overflow: auto;
+      position: relative;
+    }
+   
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(217, 70, 239, 0.2) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+   
+    html { height: 100%; }
+   
+    .app-wrapper {
+      width: 100%;
+      min-height: 100%;
+      padding: 2rem 1rem;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+   
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 2.5rem;
+      animation: fadeInDown 0.6s ease-out;
+    }
+   
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+   
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+   
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+   
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+   
+    .header h1 {
+      margin: 0;
+      font-size: 2.75rem;
+      font-weight: 800;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+      letter-spacing: -0.5px;
+    }
+   
+    .header p {
+      margin: 0.75rem 0 0 0;
+      font-size: 1.15rem;
+      opacity: 0.95;
+      font-weight: 500;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.1);
+    }
+   
+    .card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.05);
+      padding: 2.5rem;
+      max-width: 800px;
+      margin: 0 auto;
+      border: 1px solid rgba(255,255,255,0.3);
+      animation: fadeInUp 0.6s ease-out;
+    }
+   
+    .login-card { max-width: 480px; }
+   
+    .login-icon {
+      text-align: center;
+      font-size: 4.5rem;
+      margin-bottom: 1.25rem;
+      animation: bounce 1s ease-in-out;
+    }
+   
+    .login-title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+   
+    .login-subtitle {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+   
+    .form-section { margin-bottom: 2rem; }
+   
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid;
+      border-image: linear-gradient(90deg, #6366f1, #8b5cf6) 1;
+      letter-spacing: -0.3px;
+    }
+   
+    .form-grid { display: grid; gap: 1.25rem; }
+   
+    .form-group { display: flex; flex-direction: column; }
+   
+    .form-group label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.625rem;
+    }
+   
+    .required { color: #ef4444; margin-left: 0.25rem; }
+   
+    .form-group select, .form-group input {
+      padding: 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+      font-weight: 500;
+    }
+   
+    .form-group select:hover, .form-group input:hover { border-color: #c7d2fe; }
+   
+    .form-group select:focus, .form-group input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+   
+    .form-group input.error {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    }
+   
+    .hint-text {
+      font-size: 0.875rem;
+      color: #6366f1;
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+   
+    .error-message {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      color: #dc2626;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      margin-top: 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-left: 4px solid #ef4444;
+    }
+   
+    .submit-btn {
+      width: 100%;
+      padding: 1.125rem;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      margin-top: 0.5rem;
+    }
+   
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    }
+   
+    .submit-btn:active { transform: translateY(0); }
+   
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+   
+    .students-list { margin-top: 3rem; }
+   
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+   
+    .list-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1f2937;
+      letter-spacing: -0.3px;
+    }
+   
+    .count-badge {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      padding: 0.5rem 1.25rem;
+      border-radius: 24px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+   
+    .student-item {
+      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      animation: slideIn 0.4s ease-out;
+    }
+   
+    .student-item:hover {
+      border-color: #c7d2fe;
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+      transform: translateY(-2px);
+    }
+   
+    .student-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+   
+    .student-info { flex: 1; }
+   
+    .student-no {
+      display: inline-block;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      padding: 0.375rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.625rem;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+   
+    .student-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.375rem;
+      letter-spacing: -0.3px;
+    }
+   
+    .student-class {
+      font-size: 0.9rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+   
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6b7280;
+    }
+   
+    .empty-icon { font-size: 5rem; margin-bottom: 1.25rem; opacity: 0.8; }
+   
+    .empty-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 0.625rem;
+      letter-spacing: -0.3px;
+    }
+   
+    .teacher-info {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border: 2px solid #c7d2fe;
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.15);
+    }
+   
+    .teacher-details { display: flex; align-items: center; gap: 1rem; }
+   
+    .teacher-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #1f2937;
+      letter-spacing: -0.3px;
+    }
+   
+    .teacher-class {
+      font-size: 0.95rem;
+      color: #6366f1;
+      font-weight: 700;
+    }
+   
+    .logout-btn {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      padding: 0.625rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+   
+    .logout-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+    }
+   
+    .hidden { display: none; }
+   
+    @media (max-width: 768px) {
+      .card { padding: 1.75rem; }
+      .header h1 { font-size: 2.25rem; }
+      .teacher-info {
+        flex-direction: column;
+        gap: 1.25rem;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body class="h-full">
+  <div class="app-wrapper">
+    <div class="header">
+      <h1>📚 Öğrenci Bilgi Sistemi</h1>
+      <p>Öğrenci ve veli bilgilerini kaydedin ve yönetin</p>
+    </div>
+
+    <!-- Giriş Ekranı -->
+    <div id="loginScreen" class="card login-card">
+      <div class="login-icon">🔐</div>
+      <div class="login-title">Öğretmen Girişi</div>
+      <div class="login-subtitle">Lütfen adınızı seçin ve şifrenizi girin</div>
+     
+      <div class="form-group">
+        <label for="teacherSelect">Öğretmen Adı<span class="required">*</span></label>
+        <select id="teacherSelect">
+          <option value="">-- Öğretmen Seçiniz --</option>
+        </select>
+      </div>
+     
+      <div class="form-group">
+        <label for="passwordInput">Şifre<span class="required">*</span></label>
+        <input type="password" id="passwordInput" placeholder="Şifrenizi girin" maxlength="4">
+        <div class="hint-text">💡 İpucu: Doğum tarihinizin ilk 4 rakamı (GGAA)</div>
+      </div>
+     
+      <div id="loginError"></div>
+      <button class="submit-btn" onclick="handleLogin()">Giriş Yap</button>
+    </div>
+
+    <!-- Ana Uygulama Ekranı -->
+    <div id="mainApp" class="hidden">
+      <div class="card">
+        <div class="teacher-info">
+          <div class="teacher-details">
+            <div>
+              <div class="teacher-name" id="loggedTeacherName"></div>
+              <div class="teacher-class" id="loggedTeacherClass"></div>
+            </div>
+          </div>
+          <button class="logout-btn" onclick="handleLogout()">Çıkış Yap</button>
+        </div>
+       
+        <div id="studentsFormArea"></div>
+       
+        <div class="students-list">
+          <div class="list-header">
+            <div class="list-title">Kayıtlı Öğrenciler</div>
+            <div class="count-badge" id="studentCount">0</div>
+          </div>
+          <div id="studentsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ──────────────────────────────────────────────────────────────
+    // VERİ KAYNAKLARI
+    // ──────────────────────────────────────────────────────────────
+    const TEACHERS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=ogretmenler';
+    const STUDENT_LIST_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=TumListe';
+
+    let teachers = [];
+    let allStudents = [];
+    let currentTeacher = null;
+    let loginAttempts = 0;
+
+    // ──────────────────────────────────────────────────────────────
+    // ÖĞRETMENLERİ YÜKLE
+    // ──────────────────────────────────────────────────────────────
+    async function loadTeachers() {
+      try {
+        const response = await fetch(TEACHERS_SHEET_URL);
+        if (!response.ok) throw new Error('Öğretmen listesi alınamadı');
+
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, '_')
+        });
+
+        teachers = parsed.data
+          .filter(t => t.ogretmen_adi?.trim())
+          .map(t => {
+            const birth = String(t.dogum_tarihi || '').trim();
+            const password = birth.replace(/\D/g, '').slice(0,4); // GGAA
+
+            return {
+              name: t.ogretmen_adi.trim(),
+              class: t.sinif?.trim() || 'Sınıf belirtilmemiş',
+              password: password || '0000'
+            };
+          });
+
+        populateTeacherSelect();
+      } catch (err) {
+        console.error('Öğretmen yükleme hatası:', err);
+        document.getElementById('loginError').innerHTML = 
+          '<div class="error-message">Öğretmen listesi yüklenemedi!</div>';
+      }
+    }
+
+    function populateTeacherSelect() {
+      const select = document.getElementById('teacherSelect');
+      select.innerHTML = '<option value="">-- Öğretmen Seçiniz --</option>';
+
+      teachers.sort((a,b) => a.name.localeCompare(b.name, 'tr-TR'))
+        .forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.name;
+          opt.textContent = `${t.name} - ${t.class}`;
+          select.appendChild(opt);
+        });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // ÖĞRENCİ LİSTESİNİ YÜKLE
+    // ──────────────────────────────────────────────────────────────
+    async function loadStudentList() {
+      try {
+        const response = await fetch(STUDENT_LIST_URL);
+        if (!response.ok) throw new Error('Öğrenci listesi alınamadı');
+
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, '_')
+        });
+
+        allStudents = parsed.data
+          .filter(s => s.adı?.trim())
+          .map(s => ({
+            id: s['sıra_no']?.trim() || '',
+            ogr_no: s['öğrenci_no']?.trim() || '',
+            ad: s.adı?.trim() || '',
+            soyad: s.soyadı?.trim() || '',
+            sinif: s.sınıfı?.trim() || '',
+            tamAd: `${s.adı?.trim() || ''} ${s.soyadı?.trim() || ''}`.trim()
+          }));
+
+        if (currentTeacher) renderStudentList();
+      } catch (err) {
+        console.error('Öğrenci yükleme hatası:', err);
+        document.getElementById('studentsList').innerHTML = 
+          '<div class="error-message">Öğrenci listesi yüklenemedi!</div>';
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // GİRİŞ İŞLEMİ
+    // ──────────────────────────────────────────────────────────────
+    function handleLogin() {
+      const selectedName = document.getElementById('teacherSelect').value;
+      const password = document.getElementById('passwordInput').value.trim();
+
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.innerHTML = '';
+
+      if (!selectedName) return errorDiv.innerHTML = '<div class="error-message">Öğretmen seçiniz!</div>';
+      if (!password) return errorDiv.innerHTML = '<div class="error-message">Şifre giriniz!</div>';
+
+      const teacher = teachers.find(t => t.name === selectedName);
+
+      if (!teacher) return errorDiv.innerHTML = '<div class="error-message">Öğretmen bulunamadı!</div>';
+      if (teacher.password !== password) {
+        loginAttempts++;
+        return errorDiv.innerHTML = `<div class="error-message">Şifre yanlış!${loginAttempts >= 3 ? ' (Çok fazla yanlış deneme)' : ''}</div>`;
+      }
+
+      currentTeacher = teacher;
+      document.getElementById('loggedTeacherName').textContent = teacher.name;
+      document.getElementById('loggedTeacherClass').textContent = teacher.class;
+
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+
+      renderStudentList();
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // ÖĞRENCİ LİSTESİNİ GÖSTER (sadece kendi sınıfı)
+    // ──────────────────────────────────────────────────────────────
+    function renderStudentList() {
+      const container = document.getElementById('studentsList');
+      container.innerHTML = '';
+
+      if (!currentTeacher) return;
+
+      const myStudents = allStudents.filter(s => 
+        s.sinif && s.sinif.trim() === currentTeacher.class.trim()
+      );
+
+      document.getElementById('studentCount').textContent = myStudents.length;
+
+      if (myStudents.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <div class="empty-title">Bu şubede henüz öğrenci kaydı yok</div>
+          </div>`;
+        return;
+      }
+
+      myStudents.forEach(student => {
+        const div = document.createElement('div');
+        div.className = 'student-item';
+        div.innerHTML = `
+          <div class="student-main">
+            <div class="student-info">
+              <div class="student-no">No: ${student.ogr_no || '-'}</div>
+              <div class="student-name">${student.tamAd}</div>
+              <div class="student-class">${student.sinif}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function handleLogout() {
+      currentTeacher = null;
+      loginAttempts = 0;
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginError').innerHTML = '';
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // BAŞLATMA
+    // ──────────────────────────────────────────────────────────────
+    async function init() {
+      await loadTeachers();
+      await loadStudentList();
+
+      document.getElementById('passwordInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') handleLogin();
+      });
+    }
+
+    // Sayfa yüklendiğinde çalıştır
+    init();
+  </script>
+</body>
+</html>
