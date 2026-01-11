@@ -433,15 +433,16 @@
     // ──────────────────────────────────────────────────────────────
     // VERİ KAYNAKLARI
     // ──────────────────────────────────────────────────────────────
-    // Senin Apps Script web app URL'sini buraya kopyala (exec ile biten uzun link)
-const PROXY_BASE = 'https://script.google.com/macros/s/AKfycbw4hTWAzTtXYxbRTCzJdq68851VdLMsiTykGlmCFKXzDP8uUgLnXx34uqajLWmBF1G24g/exec';  // ← TAM BURAYA SENİN EXEC LINKİNİ YAPIŞTIR!
+   const CORS_PROXY = 'https://corsproxy.io/?';
 
-// Öğretmenler (gid ile, en güvenli)
-const TEACHERS_SHEET_URL = PROXY_BASE + '?gid=71214639';
+const TEACHERS_SHEET_URL = CORS_PROXY + encodeURIComponent(
+  'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=71214639'
+);
 
-// Öğrenciler (sheet adı ile - eğer isim "TumListe" ise)
-const STUDENT_LIST_URL = PROXY_BASE + '?gid=1771895607';
-
+// Öğrenciler için de (eğer gid biliyorsan kullan, yoksa sheet adı):
+const STUDENT_LIST_URL = CORS_PROXY + encodeURIComponent(
+  'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=1771895607'
+);
     let teachers = [];
     let allStudents = [];
     let currentTeacher = null;
