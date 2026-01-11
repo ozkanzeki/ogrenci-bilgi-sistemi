@@ -1,604 +1,505 @@
-<!doctype html>
-<html lang="tr" class="h-full">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Öğrenci Bilgi Sistemi</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    /* Mevcut tüm stil kodunuz aynı kalıyor - buraya dokunmuyorum */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-   
-    body {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-      height: 100%;
-      overflow: auto;
-      position: relative;
-    }
-   
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background:
-        radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(217, 70, 239, 0.2) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-   
-    html { height: 100%; }
-   
-    .app-wrapper {
-      width: 100%;
-      min-height: 100%;
-      padding: 2rem 1rem;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 1;
-    }
-   
-    .header {
-      text-align: center;
-      color: white;
-      margin-bottom: 2.5rem;
-      animation: fadeInDown 0.6s ease-out;
-    }
-   
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-   
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-   
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-   
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-   
-    .header h1 {
-      margin: 0;
-      font-size: 2.75rem;
-      font-weight: 800;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.2);
-      letter-spacing: -0.5px;
-    }
-   
-    .header p {
-      margin: 0.75rem 0 0 0;
-      font-size: 1.15rem;
-      opacity: 0.95;
-      font-weight: 500;
-      text-shadow: 0 1px 10px rgba(0,0,0,0.1);
-    }
-   
-    .card {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.05);
-      padding: 2.5rem;
-      max-width: 800px;
-      margin: 0 auto;
-      border: 1px solid rgba(255,255,255,0.3);
-      animation: fadeInUp 0.6s ease-out;
-    }
-   
-    .login-card { max-width: 480px; }
-   
-    .login-icon {
-      text-align: center;
-      font-size: 4.5rem;
-      margin-bottom: 1.25rem;
-      animation: bounce 1s ease-in-out;
-    }
-   
-    .login-title {
-      text-align: center;
-      font-size: 2rem;
-      font-weight: 800;
-      color: #1f2937;
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.5px;
-    }
-   
-    .login-subtitle {
-      text-align: center;
-      color: #6b7280;
-      margin-bottom: 2.5rem;
-      font-size: 1rem;
-      font-weight: 500;
-    }
-   
-    .form-section { margin-bottom: 2rem; }
-   
-    .section-title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #1f2937;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 3px solid;
-      border-image: linear-gradient(90deg, #6366f1, #8b5cf6) 1;
-      letter-spacing: -0.3px;
-    }
-   
-    .form-grid { display: grid; gap: 1.25rem; }
-   
-    .form-group { display: flex; flex-direction: column; }
-   
-    .form-group label {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.625rem;
-    }
-   
-    .required { color: #ef4444; margin-left: 0.25rem; }
-   
-    .form-group select, .form-group input {
-      padding: 1rem;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: white;
-      font-weight: 500;
-    }
-   
-    .form-group select:hover, .form-group input:hover { border-color: #c7d2fe; }
-   
-    .form-group select:focus, .form-group input:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-    }
-   
-    .form-group input.error {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-    }
-   
-    .hint-text {
-      font-size: 0.875rem;
-      color: #6366f1;
-      margin-top: 0.5rem;
-      font-weight: 500;
-    }
-   
-    .error-message {
-      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-      color: #dc2626;
-      padding: 1rem 1.25rem;
-      border-radius: 12px;
-      margin-top: 1.25rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border-left: 4px solid #ef4444;
-    }
-   
-    .submit-btn {
-      width: 100%;
-      padding: 1.125rem;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-      margin-top: 0.5rem;
-    }
-   
-    .submit-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
-    }
-   
-    .submit-btn:active { transform: translateY(0); }
-   
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-   
-    .students-list { margin-top: 3rem; }
-   
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-   
-    .list-title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #1f2937;
-      letter-spacing: -0.3px;
-    }
-   
-    .count-badge {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: white;
-      padding: 0.5rem 1.25rem;
-      border-radius: 24px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    }
-   
-    .student-item {
-      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-      animation: slideIn 0.4s ease-out;
-    }
-   
-    .student-item:hover {
-      border-color: #c7d2fe;
-      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
-      transform: translateY(-2px);
-    }
-   
-    .student-main {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
-    }
-   
-    .student-info { flex: 1; }
-   
-    .student-no {
-      display: inline-block;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: white;
-      padding: 0.375rem 1rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      font-weight: 700;
-      margin-bottom: 0.625rem;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-    }
-   
-    .student-name {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 0.375rem;
-      letter-spacing: -0.3px;
-    }
-   
-    .student-class {
-      font-size: 0.9rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
-   
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #6b7280;
-    }
-   
-    .empty-icon { font-size: 5rem; margin-bottom: 1.25rem; opacity: 0.8; }
-   
-    .empty-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #374151;
-      margin-bottom: 0.625rem;
-      letter-spacing: -0.3px;
-    }
-   
-    .teacher-info {
-      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-      border: 2px solid #c7d2fe;
-      border-radius: 16px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.15);
-    }
-   
-    .teacher-details { display: flex; align-items: center; gap: 1rem; }
-   
-    .teacher-name {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #1f2937;
-      letter-spacing: -0.3px;
-    }
-   
-    .teacher-class {
-      font-size: 0.95rem;
-      color: #6366f1;
-      font-weight: 700;
-    }
-   
-    .logout-btn {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-      border: none;
-      padding: 0.625rem 1.5rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-   
-    .logout-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
-    }
-   
-    .hidden { display: none; }
-   
-    @media (max-width: 768px) {
-      .card { padding: 1.75rem; }
-      .header h1 { font-size: 2.25rem; }
-      .teacher-info {
-        flex-direction: column;
-        gap: 1.25rem;
-        text-align: center;
-      }
-    }
-  </style>
-</head>
-<body class="h-full">
-  <div class="app-wrapper">
-    <div class="header">
-      <h1>📚 Öğrenci Bilgi Sistemi</h1>
-      <p>Öğrenci ve veli bilgilerini kaydedin ve yönetin</p>
-    </div>
-
-    <!-- Giriş Ekranı -->
-    <div id="loginScreen" class="card login-card">
-      <div class="login-icon">🔐</div>
-      <div class="login-title">Öğretmen Girişi</div>
-      <div class="login-subtitle">Lütfen adınızı seçin ve şifrenizi girin</div>
-     
-      <div class="form-group">
-        <label for="teacherSelect">Öğretmen Adı<span class="required">*</span></label>
-        <select id="teacherSelect">
-          <option value="">-- Öğretmen Seçiniz --</option>
-        </select>
-      </div>
-     
-      <div class="form-group">
-        <label for="passwordInput">Şifre<span class="required">*</span></label>
-        <input type="password" id="passwordInput" placeholder="Şifrenizi girin" maxlength="4">
-        <div class="hint-text">💡 İpucu: Doğum tarihinizin ilk 4 rakamı (GGAA)</div>
-      </div>
-     
-      <div id="loginError"></div>
-      <button class="submit-btn" onclick="handleLogin()">Giriş Yap</button>
-    </div>
-
-    <!-- Ana Uygulama Ekranı -->
-    <div id="mainApp" class="hidden">
-      <div class="card">
-        <div class="teacher-info">
-          <div class="teacher-details">
-            <div>
-              <div class="teacher-name" id="loggedTeacherName"></div>
-              <div class="teacher-class" id="loggedTeacherClass"></div>
-            </div>
-          </div>
-          <button class="logout-btn" onclick="handleLogout()">Çıkış Yap</button>
-        </div>
-       
-        <div id="studentsFormArea"></div>
-       
-        <div class="students-list">
-          <div class="list-header">
-            <div class="list-title">Kayıtlı Öğrenciler</div>
-            <div class="count-badge" id="studentCount">0</div>
-          </div>
-          <div id="studentsList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ──────────────────────────────────────────────────────────────
-    // VERİ KAYNAKLARI
-    // ──────────────────────────────────────────────────────────────
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Öğrenci Bilgi Sistemi</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+  <!-- Tailwind CSS (modern tasarım) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PapaParse (CSV parse) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    /* Küçük görsel dokunuşlar */
+    .card { @apply bg-white shadow-lg rounded-xl p-6; }
+    .btn  { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-colors; }
+    .btn-primary { @apply bg-indigo-600 text-white hover:bg-indigo-700; }
+    .btn-secondary { @apply bg-gray-100 text-gray-900 hover:bg-gray-200; }
+    .input { @apply w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500; }
+    .badge  { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium; }
+    .badge-green { @apply bg-emerald-100 text-emerald-700; }
+    .badge-red   { @apply bg-rose-100 text-rose-700; }
+  </style>
 </head>
-<body>
-  <h1>Öğrenci Bilgi Sistemi</h1>
-  <div id="login">
-    <select id="teacherSelect"></select>
-    <input type="password" id="passwordInput" placeholder="Şifre (GGAA)">
-    <button onclick="login()">Giriş Yap</button>
-    <p id="loginError"></p>
-  </div>
-  <div id="studentCount"></div>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <header class="border-b bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-semibold">Öğrenci Bilgi Sistemi</h1>
+      <div id="userBar" class="text-sm text-gray-600"></div>
+    </div>
+  </header>
 
-<script>
-  // ✅ Senin verdiğin Google Sheets linkleri CSV formatına çevrildi
-  const TEACHERS_SHEET_URL = "https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=71214639";
-  const STUDENT_LIST_URL   = "https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=1771895607";
+  <main class="mx-auto max-w-6xl px-4 py-8 space-y-8">
+    <!-- Adım 1: Öğretmen seçimi -->
+    <section id="stepSelectTeacher" class="card">
+      <h2 class="text-lg font-semibold mb-4">Giriş — Öğretmen Seçimi</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-1">Öğretmen</label>
+          <select id="teacherSelect" class="input">
+            <option value="">Seçiniz...</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnGoVerify" class="btn btn-primary">Devam</button>
+          <button id="btnReloadTeachers" class="btn btn-secondary">Listeleri Yenile</button>
+        </div>
+      </div>
+      <p id="teacherLoadStatus" class="mt-3 text-sm text-gray-600"></p>
+    </section>
 
-  let teachers = [];
-  let students = [];
+    <!-- Adım 2: Güvenlik doğrulaması -->
+    <section id="stepVerify" class="card hidden">
+      <h2 class="text-lg font-semibold mb-4">Güvenlik Doğrulaması</h2>
+      <p class="text-sm text-gray-600 mb-4">Doğum tarihinin ilk 4 rakamı — format: GGAA (örn. 0205).</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-1">Şifre (GGAA)</label>
+          <input id="passwordInput" type="password" class="input" placeholder="GGAA" />
+        </div>
+        <div class="flex gap-2">
+          <button id="btnVerify" class="btn btn-primary">Giriş Yap</button>
+          <button id="btnBackSelect" class="btn btn-secondary">Geri</button>
+        </div>
+      </div>
+      <p id="verifyStatus" class="mt-3 text-sm"></p>
+    </section>
 
-  // Öğretmen listesini yükle
-  fetch(TEACHERS_SHEET_URL)
-    .then(res => res.text())
-    .then(csv => {
-      const parsed = Papa.parse(csv, {
-        header: true,
-        transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, "_")
-      });
-      teachers = parsed.data.filter(t => t.ogretmen_adi);
-      const select = document.getElementById("teacherSelect");
-      teachers.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.ogretmen_adi;
-        opt.textContent = t.ogretmen_adi;
-        select.appendChild(opt);
-      });
-    })
-    .catch(err => {
-      document.getElementById("loginError").textContent = "Öğretmen listesi yüklenemedi!";
-      console.error(err);
-    });
+    <!-- Adım 3: Sınıf ve öğrenciler -->
+    <section id="stepClass" class="card hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Sınıf — Öğrenci Listesi</h2>
+        <div class="flex gap-2">
+          <button id="btnRefreshClass" class="btn btn-secondary">Listeyi Yenile</button>
+          <button id="btnLogout" class="btn btn-secondary">Çıkış</button>
+        </div>
+      </div>
 
-  // Öğrenci listesini yükle
-  fetch(STUDENT_LIST_URL)
-    .then(res => res.text())
-    .then(csv => {
-      const parsed = Papa.parse(csv, {
-        header: true,
-        transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, "_")
-      });
-      students = parsed.data.filter(s => s.adı && s.soyadı);
-      document.getElementById("studentCount").textContent =
-        "Kayıtlı öğrenci sayısı: " + students.length;
-    })
-    .catch(err => console.error("Öğrenci listesi yüklenemedi!", err));
+      <div id="classMeta" class="text-sm text-gray-700 mb-4"></div>
 
-  // Giriş kontrolü
-  function login() {
-    const selected = document.getElementById("teacherSelect").value;
-    const password = document.getElementById("passwordInput").value;
-    const teacher = teachers.find(t => t.ogretmen_adi === selected);
-    if (teacher && teacher.dogum_tarihi && teacher.dogum_tarihi.slice(0,4) === password) {
-      alert("Giriş başarılı: " + teacher.ogretmen_adi);
-    } else {
-      document.getElementById("loginError").textContent = "Hatalı giriş!";
-    }
-  }
-    // ──────────────────────────────────────────────────────────────
-    // GİRİŞ İŞLEMİ
-    // ──────────────────────────────────────────────────────────────
-    function handleLogin() {
-      const selectedName = document.getElementById('teacherSelect').value;
-      const password = document.getElementById('passwordInput').value.trim();
+      <div class="overflow-x-auto border rounded-xl">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">#</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Adı</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Soyadı</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Numara</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Durum</th>
+              <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTable" class="divide-y divide-gray-200 bg-white"></tbody>
+        </table>
+      </div>
+      <p id="classStatus" class="mt-3 text-sm text-gray-600"></p>
+    </section>
 
-      const errorDiv = document.getElementById('loginError');
-      errorDiv.innerHTML = '';
-
-      if (!selectedName) return errorDiv.innerHTML = '<div class="error-message">Öğretmen seçiniz!</div>';
-      if (!password) return errorDiv.innerHTML = '<div class="error-message">Şifre giriniz!</div>';
-
-      const teacher = teachers.find(t => t.name === selectedName);
-
-      if (!teacher) return errorDiv.innerHTML = '<div class="error-message">Öğretmen bulunamadı!</div>';
-      if (teacher.password !== password) {
-        loginAttempts++;
-        return errorDiv.innerHTML = `<div class="error-message">Şifre yanlış!${loginAttempts >= 3 ? ' (Çok fazla yanlış deneme)' : ''}</div>`;
-      }
-
-      currentTeacher = teacher;
-      document.getElementById('loggedTeacherName').textContent = teacher.name;
-      document.getElementById('loggedTeacherClass').textContent = teacher.class;
-
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('mainApp').classList.remove('hidden');
-
-      renderStudentList();
-    }
-
-    // ──────────────────────────────────────────────────────────────
-    // ÖĞRENCİ LİSTESİNİ GÖSTER (sadece kendi sınıfı)
-    // ──────────────────────────────────────────────────────────────
-    function renderStudentList() {
-      const container = document.getElementById('studentsList');
-      container.innerHTML = '';
-
-      if (!currentTeacher) return;
-
-      const myStudents = allStudents.filter(s => 
-        s.sinif && s.sinif.trim() === currentTeacher.class.trim()
-      );
-
-      document.getElementById('studentCount').textContent = myStudents.length;
-
-      if (myStudents.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">📚</div>
-            <div class="empty-title">Bu şubede henüz öğrenci kaydı yok</div>
-          </div>`;
-        return;
-      }
-
-      myStudents.forEach(student => {
-        const div = document.createElement('div');
-        div.className = 'student-item';
-        div.innerHTML = `
-          <div class="student-main">
-            <div class="student-info">
-              <div class="student-no">No: ${student.ogr_no || '-'}</div>
-              <div class="student-name">${student.tamAd}</div>
-              <div class="student-class">${student.sinif}</div>
+    <!-- Modal: Öğrenci bilgi formu -->
+    <section id="modalForm" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50">
+      <div class="card max-w-2xl w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold">Öğrenci Bilgi Formu</h3>
+          <button id="btnCloseModal" class="btn btn-secondary">Kapat</button>
+        </div>
+        <form id="studentForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Adı</label>
+              <input id="f_ad" class="input" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Soyadı</label>
+              <input id="f_soyad" class="input" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Numara</label>
+              <input id="f_numara" class="input" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Sınıf</label>
+              <input id="f_sinif" class="input" required />
             </div>
           </div>
+
+          <!-- Örnek ek alanlar: -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Veli Adı</label>
+              <input id="f_veli_ad" class="input" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Veli Telefon</label>
+              <input id="f_veli_tel" class="input" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <p id="formStatus" class="text-sm text-gray-600"></p>
+            <button id="btnSubmitForm" class="btn btn-primary" type="submit">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mt-8 border-t bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-6 text-xs text-gray-500">
+      GitHub Pages üzerinde yayınlanmıştır
+    </div>
+  </footer>
+
+  <script>
+    <script>
+  const CONFIG = {
+    // Öğretmen ve öğrenci listeleri aynı sheet'te ise buraya o ID'yi yaz
+    SHEET_ID_LISTS: "1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA",
+    OGRETMENLER_GID: "71214639",
+    OGRENCI_LISTESI_GID: "1771895607",
+
+    // Öğrenci bilgi kayıtları ayrı sheet'te ise buraya o ID'yi yaz
+    SHEET_ID_SUBMISSIONS: "1FzCECc-WntvPoGoTw-EKMIdc8VWrR0OQeeyFPXdxzhk",
+    OGRENCI_BILGI_GID: "957162178",
+
+    // Yazma için Google Apps Script Web App URL
+    WRITE_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwh_yuAhibe6zshqlaBjjay4VBlyABvlE080qVN51SHmoggoCZL6dYGYXX0F_VxMKL08w/exec",
+    USE_CORS_PROXY: false
+  };
+
+  function csvUrl(sheetId, gid){
+    const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    return CONFIG.USE_CORS_PROXY ? `https://corsproxy.io/?${base}` : base;
+  }
+
+  // Örnek kullanım:
+  // fetch(csvUrl(CONFIG.SHEET_ID_LISTS, CONFIG.OGRETMENLER_GID))
+  // fetch(csvUrl(CONFIG.SHEET_ID_SUBMISSIONS, CONFIG.OGRENCI_BILGI_GID))
+</script>
+
+    };
+
+    // ========== YARDIMCI FONKSİYONLAR ==========
+    const qs  = sel => document.querySelector(sel);
+    const qsa = sel => Array.from(document.querySelectorAll(sel));
+    const show = el => el.classList.remove("hidden");
+    const hide = el => el.classList.add("hidden");
+
+    function csvUrl(gid){
+      const base = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
+      return CONFIG.USE_CORS_PROXY ? `https://corsproxy.io/?${base}` : base;
+    }
+
+    function parseCsvToObjects(csv){
+      const parsed = Papa.parse(csv, {
+        header: true,
+        transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, "_")
+      });
+      return parsed.data.filter(row => Object.values(row).some(v => String(v||"").trim() !== ""));
+    }
+
+    function toastStatus(el, msg, type="info"){
+      el.textContent = msg;
+      el.className = "mt-3 text-sm " + (type==="error" ? "text-rose-600" : type==="success" ? "text-emerald-700" : "text-gray-600");
+    }
+
+    // Tarihten GGAA çıkar (ör: 02/05/1990 → 0205 veya 02.05.1990 → 0205)
+    function first4FromDate(dobRaw){
+      if(!dobRaw) return "";
+      const s = String(dobRaw).replace(/[^\d]/g,""); // sadece rakamlar
+      // Çoğu formatta ilk 4: GGAA
+      return s.slice(0,4);
+    }
+
+    // ========== DURUM / BELLEK ==========
+    const state = {
+      teachers: [],
+      studentsAll: [],
+      submissions: [], // önceden girilmiş kayıtlar
+      currentTeacher: null, // seçilen öğretmen objesi
+      authed: false,        // doğrulama başarılı mı
+      classStudents: []     // öğretmenin sınıfındaki öğrenciler
+    };
+
+    // ========== ÖĞRETMENLERİ YÜKLE ==========
+    async function loadTeachers(){
+      const statusEl = qs("#teacherLoadStatus");
+      toastStatus(statusEl, "Öğretmen listesi yükleniyor...");
+      try {
+        const res = await fetch(csvUrl(CONFIG.OGRETMENLER_GID));
+        const csv = await res.text();
+        state.teachers = parseCsvToObjects(csv);
+        const sel = qs("#teacherSelect");
+        sel.innerHTML = `<option value="">Seçiniz...</option>`;
+        state.teachers.forEach(t => {
+          // beklenen başlık: ogretmen_adi, dogum_tarihi, sinif (veya sınıfı)
+          const name = t.ogretmen_adi || t.ad || t.isim || t.adı || "";
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          sel.appendChild(opt);
+        });
+        toastStatus(statusEl, `Toplam ${state.teachers.length} öğretmen yüklendi.`, "success");
+      } catch(err){
+        console.error("Öğretmen listesi yüklenemedi:", err);
+        toastStatus(statusEl, "Öğretmen listesi yüklenemedi!", "error");
+      }
+    }
+
+    // ========== ÖĞRENCİLERİ YÜKLE ==========
+    async function loadStudents(){
+      const classStatus = qs("#classStatus");
+      toastStatus(classStatus, "Öğrenciler yükleniyor...");
+      try {
+        const res = await fetch(csvUrl(CONFIG.OGRENCI_LISTESI_GID));
+        const csv = await res.text();
+        state.studentsAll = parseCsvToObjects(csv);
+        toastStatus(classStatus, `Toplam ${state.studentsAll.length} öğrenci bulundu.`, "success");
+      } catch(err){
+        console.error("Öğrenci listesi yüklenemedi:", err);
+        toastStatus(classStatus, "Öğrenci listesi yüklenemedi!", "error");
+      }
+    }
+
+    // ========== ÖNCEKİ KAYITLARI YÜKLE ==========
+    async function loadSubmissions(){
+      try {
+        const res = await fetch(csvUrl(CONFIG.OGRENCI_BILGI_GID));
+        const csv = await res.text();
+        state.submissions = parseCsvToObjects(csv);
+      } catch(err){
+        console.warn("Kayıt kontrol listesi yüklenemedi (devam ediliyor):", err);
+        state.submissions = [];
+      }
+    }
+
+    // ========== ÖĞRETMEN SEÇİMİ SONRASI ==========
+    function goToVerify(){
+      const selVal = qs("#teacherSelect").value;
+      if(!selVal){
+        toastStatus(qs("#teacherLoadStatus"), "Lütfen öğretmen seçiniz.", "error");
+        return;
+      }
+      // öğretmen objesini bul
+      const t = state.teachers.find(x => {
+        const name = x.ogretmen_adi || x.ad || x.isim || x.adı || "";
+        return name === selVal;
+      });
+      if(!t){
+        toastStatus(qs("#teacherLoadStatus"), "Öğretmen bulunamadı.", "error");
+        return;
+      }
+      state.currentTeacher = t;
+      hide(qs("#stepSelectTeacher"));
+      show(qs("#stepVerify"));
+
+      qs("#verifyStatus").textContent = "";
+      qs("#userBar").textContent = `Seçilen öğretmen: ${selVal}`;
+    }
+
+    // ========== DOĞRULAMA ==========
+    function verifyPassword(){
+      const pwd = qs("#passwordInput").value.trim();
+      if(!state.currentTeacher){
+        toastStatus(qs("#verifyStatus"), "Öğretmen seçimi bulunamadı.", "error");
+        return;
+      }
+      const expected = first4FromDate(state.currentTeacher.dogum_tarihi || state.currentTeacher.doğum_tarihi);
+      if(!expected){
+        toastStatus(qs("#verifyStatus"), "Öğretmen doğum tarihi verisi eksik.", "error");
+        return;
+      }
+      if(pwd === expected){
+        state.authed = true;
+        toastStatus(qs("#verifyStatus"), "Doğrulama başarılı.", "success");
+        // sınıfa geç
+        hide(qs("#stepVerify"));
+        showClass();
+      } else {
+        toastStatus(qs("#verifyStatus"), "Hatalı şifre.", "error");
+      }
+    }
+
+    // ========== SINIFI GÖSTER ==========
+    async function showClass(){
+      show(qs("#stepClass"));
+      // öğretmenin sınıf bilgisi
+      const sinif = state.currentTeacher.sinif || state.currentTeacher.sınıf || state.currentTeacher.sınıfı || "";
+      qs("#classMeta").textContent = `Öğretmen: ${(state.currentTeacher.ogretmen_adi || state.currentTeacher.adı || "")} — Sınıf: ${sinif || "Belirtilmemiş"}`;
+
+      // öğrenciler yüklü değilse yükle
+      if(state.studentsAll.length === 0){
+        await loadStudents();
+      }
+      // daha önceki kayıtlar
+      if(state.submissions.length === 0){
+        await loadSubmissions();
+      }
+
+      // sınıfın öğrencileri
+      state.classStudents = state.studentsAll.filter(s => {
+        const sSinif = s.sınıf || s.sınıfı || s.sinif || "";
+        return String(sSinif).trim() === String(sinif).trim();
+      });
+
+      // tabloyu doldur
+      const tbody = qs("#studentsTable");
+      tbody.innerHTML = "";
+      state.classStudents.forEach((s, idx) => {
+        const ad    = s.adı || s.ad || s.isim || "";
+        const soyad = s.soyadı || s.soyad || "";
+        const num   = s.numara || s.no || s.öğrenci_no || "";
+
+        // daha önce dolduruldu mu? submissions içinde eşleşme kontrolü
+        const hasSubmission = state.submissions.some(sub => {
+          const sad    = sub.adı || sub.ad || sub.isim || "";
+          const ssoyad = sub.soyadı || sub.soyad || "";
+          const snum   = sub.numara || sub.no || sub.öğrenci_no || "";
+          return String(sad).trim() === String(ad).trim()
+              && String(ssoyad).trim() === String(soyad).trim()
+              && String(snum).trim() === String(num).trim();
+        });
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-sm text-gray-700">${idx+1}</td>
+          <td class="px-4 py-2 text-sm">${ad}</td>
+          <td class="px-4 py-2 text-sm">${soyad}</td>
+          <td class="px-4 py-2 text-sm">${num}</td>
+          <td class="px-4 py-2">
+            ${hasSubmission
+              ? `<span class="badge badge-green">Daha önce dolduruldu</span>`
+              : `<span class="badge badge-red">Eksik</span>`}
+          </td>
+          <td class="px-4 py-2">
+            <button class="btn btn-primary text-xs" data-action="fill" data-index="${idx}" ${hasSubmission ? "disabled" : ""}>
+              Bilgi Gir
+            </button>
+          </td>
         `;
-        container.appendChild(div);
+        tbody.appendChild(tr);
       });
+
+      toastStatus(qs("#classStatus"), `Sınıfta ${state.classStudents.length} öğrenci listelendi.`, "success");
     }
 
-    function handleLogout() {
-      currentTeacher = null;
-      loginAttempts = 0;
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('passwordInput').value = '';
-      document.getElementById('loginError').innerHTML = '';
+    // ========== FORM MODALI ==========
+    function openFormModal(idx){
+      const s = state.classStudents[idx];
+      if(!s) return;
+      show(qs("#modalForm"));
+      // Form alanlarını doldur
+      const ad    = s.adı || s.ad || s.isim || "";
+      const soyad = s.soyadı || s.soyad || "";
+      const num   = s.numara || s.no || s.öğrenci_no || "";
+      const sinif = s.sınıf || s.sınıfı || s.sinif || "";
+
+      qs("#f_ad").value     = ad;
+      qs("#f_soyad").value  = soyad;
+      qs("#f_numara").value = num;
+      qs("#f_sinif").value  = sinif;
+
+      qs("#formStatus").textContent = "";
+      qs("#btnSubmitForm").disabled = false;
+      qs("#btnSubmitForm").dataset.idx = idx;
     }
 
-    // ──────────────────────────────────────────────────────────────
-    // BAŞLATMA
-    // ──────────────────────────────────────────────────────────────
-    async function init() {
+    function closeFormModal(){
+      hide(qs("#modalForm"));
+    }
+
+    // ========== KAYDET (Apps Script'e POST) ==========
+    async function submitForm(e){
+      e.preventDefault();
+      const idx = qs("#btnSubmitForm").dataset.idx;
+      const s   = state.classStudents[idx];
+      if(!s){ return; }
+
+      const payload = {
+        // Öğrenci temel alanları
+        ad: qs("#f_ad").value.trim(),
+        soyad: qs("#f_soyad").value.trim(),
+        numara: qs("#f_numara").value.trim(),
+        sinif: qs("#f_sinif").value.trim(),
+        // Ek alanlar
+        veli_ad: qs("#f_veli_ad").value.trim(),
+        veli_tel: qs("#f_veli_tel").value.trim(),
+        // Öğretmen ve zaman damgası
+        ogretmen: (state.currentTeacher.ogretmen_adi || state.currentTeacher.adı || ""),
+        ts: new Date().toISOString()
+      };
+
+      qs("#btnSubmitForm").disabled = true;
+      toastStatus(qs("#formStatus"), "Kaydediliyor...");
+
+      try {
+        const res = await fetch(CONFIG.WRITE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok){
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json().catch(()=>({ok:true}));
+        toastStatus(qs("#formStatus"), "Kayıt başarıyla eklendi.", "success");
+
+        // submissions'a ekle ve sınıf listesini güncelle
+        state.submissions.push({
+          adı: payload.ad, soyadı: payload.soyad, numara: payload.numara
+        });
+        closeFormModal();
+        showClass();
+      } catch(err){
+        console.error("Kaydet hatası:", err);
+        toastStatus(qs("#formStatus"), "Kaydetme sırasında hata oluştu.", "error");
+        qs("#btnSubmitForm").disabled = false;
+      }
+    }
+
+    // ========== OLAYLAR ==========
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if(!btn) return;
+
+      // Öğretmen adımdan doğrulamaya
+      if(btn.id === "btnGoVerify"){ goToVerify(); }
+      if(btn.id === "btnReloadTeachers"){ loadTeachers(); }
+
+      // Doğrulama
+      if(btn.id === "btnVerify"){ verifyPassword(); }
+      if(btn.id === "btnBackSelect"){
+        hide(qs("#stepVerify"));
+        show(qs("#stepSelectTeacher"));
+      }
+
+      // Sınıf ekranı
+      if(btn.id === "btnRefreshClass"){ showClass(); }
+      if(btn.id === "btnLogout"){
+        state.currentTeacher = null;
+        state.authed = false;
+        hide(qs("#stepClass"));
+        hide(qs("#stepVerify"));
+        show(qs("#stepSelectTeacher"));
+        qs("#userBar").textContent = "";
+      }
+
+      // Tablo: Bilgi Gir
+      if(btn.dataset.action === "fill"){
+        const idx = Number(btn.dataset.index || -1);
+        openFormModal(idx);
+      }
+
+      // Modal
+      if(btn.id === "btnCloseModal"){ closeFormModal(); }
+    });
+
+    qs("#studentForm").addEventListener("submit", submitForm);
+
+    // ========== BAŞLAT ==========
+    (async function init(){
       await loadTeachers();
-      await loadStudentList();
-
-      document.getElementById('passwordInput').addEventListener('keypress', e => {
-        if (e.key === 'Enter') handleLogin();
-      });
-    }
-
-    // Sayfa yüklendiğinde çalıştır
-    init();
+    })();
   </script>
 </body>
 </html>
