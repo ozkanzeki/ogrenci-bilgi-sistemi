@@ -434,8 +434,8 @@
     // VERİ KAYNAKLARI
     // ──────────────────────────────────────────────────────────────
     console.log("Sayfa yüklendi - init başlıyor");
-    const TEACHERS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=ogretmenler';
-    const STUDENT_LIST_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&sheet=TumListe';
+    const TEACHERS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=71214639';
+    const STUDENT_LIST_URL = 'https://docs.google.com/spreadsheets/d/1XX-VR8qAsi64CHPVWzkzKx82wBT5mbiPdtuectcdNEA/gviz/tq?tqx=out:csv&gid=1771895607';
 
     let teachers = [];
     let allStudents = [];
@@ -446,38 +446,45 @@
     // ÖĞRETMENLERİ YÜKLE
     // ──────────────────────────────────────────────────────────────
     async function loadTeachers() {
-      try {
-        const response = await fetch(TEACHERS_SHEET_URL);
-        if (!response.ok) throw new Error('Öğretmen listesi alınamadı');
+  try {
+    const response = await fetch(TEACHERS_SHEET_URL);
+    if (!response.ok) throw new Error('Öğretmen listesi alınamadı');
 
-        const csvText = await response.text();
-        const parsed = Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, '_')
-        });
+    const csvText = await response.text();
+    const parsed = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: h => h.trim().toLowerCase().replace(/\s+/g, '_')  // " Öğretmen Adı" → ogretmen_adi
+    });
 
-        teachers = parsed.data
-          .filter(t => t.ogretmen_adi?.trim())
-          .map(t => {
-            const birth = String(t.dogum_tarihi || '').trim();
-            const password = birth.replace(/\D/g, '').slice(0,4); // GGAA
-
-            return {
-              name: t.ogretmen_adi.trim(),
-              class: t.sinif?.trim() || 'Sınıf belirtilmemiş',
-              password: password || '0000'
-            };
-          });
-
-        populateTeacherSelect();
-      } catch (err) {
-        console.error('Öğretmen yükleme hatası:', err);
-        document.getElementById('loginError').innerHTML = 
-          '<div class="error-message">Öğretmen listesi yüklenemedi!</div>';
-      }
+    if (parsed.errors.length > 0) {
+      console.error('CSV hataları:', parsed.errors);
+      document.getElementById('loginError').innerHTML = '<div class="error-message">Öğretmen verisi parse edilemedi!</div>';
+      return;
     }
-console.log("Teachers yüklendi:", teachers.length);
+
+    teachers = parsed.data
+      .filter(t => t.ogretmen_adi?.trim())
+      .map(t => {
+        const birth = String(t.dogum_tarihi || '').trim();
+        const password = birth
+          .replace(/\D/g, '')      // Tüm non-rakamları sil ( / ve . vs.)
+          .slice(0, 4);            // İlk 4 hane: GGAA
+
+        return {
+          name: t.ogretmen_adi.trim(),
+          class: t.sinif?.trim() || 'Sınıf belirtilmemiş',
+          password: password || '0000'  // Şifre eksikse fallback
+        };
+      });
+
+    console.log("Teachers yüklendi:", teachers.length);  // ~39 olmalı
+    populateTeacherSelect();
+  } catch (err) {
+    console.error('Yükleme hatası:', err);
+    document.getElementById('loginError').innerHTML = '<div class="error-message">Öğretmen listesi yüklenemedi!</div>';
+  }
+}
     function populateTeacherSelect() {
       const select = document.getElementById('teacherSelect');
       select.innerHTML = '<option value="">-- Öğretmen Seçiniz --</option>';
